@@ -1,519 +1,439 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PowerPay | Prepaid Electricity System</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for Reports -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PowerPay | Prepaid Electricity System</title>
 
-    <style>
-        /* Custom Utilities */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    .fade-in { animation: fadeIn .25s ease-in-out; }
+    @keyframes fadeIn { from {opacity:0; transform:translateY(8px)} to {opacity:1; transform:translateY(0)} }
+    .loader { border:3px solid #f3f3f3; border-top:3px solid #3b82f6; border-radius:50%; width:18px; height:18px; animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
 
-    <!-- NAVIGATION -->
-    <nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-bolt text-yellow-400 text-2xl"></i>
-                <span class="text-xl font-bold tracking-wide">PowerPay</span>
-            </div>
-            <div id="nav-links" class="hidden md:flex space-x-6 items-center">
-                <!-- Links injected by JS based on auth state -->
-            </div>
-            <button id="mobile-menu-btn" class="md:hidden text-white focus:outline-none">
-                <i class="fa-solid fa-bars text-xl"></i>
-            </button>
-        </div>
-    </nav>
-
-    <!-- MAIN CONTENT CONTAINER -->
-    <main id="app-container" class="flex-grow container mx-auto px-4 py-8 relative">
-        <!-- Views will be injected here -->
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="bg-slate-800 text-slate-400 py-6 text-center text-sm">
-        <p>&copy; 2025 PowerPay Systems. All rights reserved.</p>
-    </footer>
-
-    <!-- MODAL: BUY TOKEN -->
-    <div id="buy-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">Buy Electricity Token</h3>
-                <button onclick="closeModal('buy-modal')" class="text-gray-400 hover:text-red-500">
-                    <i class="fa-solid fa-times text-xl"></i>
-                </button>
-            </div>
-            <form id="buy-form" onsubmit="handleBuyToken(event)">
-                <input type="hidden" id="buy-meter-id">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Meter Number</label>
-                    <input type="text" id="buy-meter-number" disabled class="w-full bg-gray-100 border border-gray-300 rounded px-3 py-2 text-gray-500">
-                </div>
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Amount ($)</label>
-                    <input type="number" id="buy-amount" required min="5" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Enter amount (e.g. 50.00)">
-                    <p class="text-xs text-gray-400 mt-1">Min: $5.00 | Rate: $0.50/unit</p>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal('buy-modal')" class="px-4 py-2 rounded text-gray-600 hover:bg-gray-100">Cancel</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center">
-                        <span id="buy-btn-text">Confirm Payment</span>
-                        <div id="buy-loader" class="loader ml-2 hidden"></div>
-                    </button>
-                </div>
-            </form>
-        </div>
+  <nav class="bg-blue-900 text-white sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-bolt text-yellow-400 text-2xl"></i>
+        <span class="text-xl font-bold">PowerPay</span>
+      </div>
+      <div id="nav-links" class="hidden md:flex gap-6 items-center"></div>
+      <button id="mobile-menu-btn" class="md:hidden"><i class="fa-solid fa-bars"></i></button>
     </div>
+  </nav>
 
-    <!-- MODAL: RECEIPT -->
-    <div id="receipt-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-8 text-center fade-in">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-check text-green-600 text-3xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Purchase Successful!</h2>
-            <p class="text-gray-500 mb-6">Your token has been generated.</p>
-            
-            <div class="bg-slate-100 border border-slate-200 rounded-lg p-4 mb-6">
-                <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Token Number</p>
-                <p id="receipt-token" class="text-2xl font-mono font-bold text-blue-900 tracking-widest break-all">0000-0000</p>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 text-sm mb-6">
-                <div class="text-left">
-                    <p class="text-gray-400">Units Added</p>
-                    <p id="receipt-units" class="font-bold text-gray-700">0.00</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-gray-400">Cost</p>
-                    <p id="receipt-cost" class="font-bold text-gray-700">$0.00</p>
-                </div>
-            </div>
+  <main id="app-container" class="container mx-auto px-4 py-8"></main>
 
-            <button onclick="closeModal('receipt-modal'); loadDashboard();" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium shadow-lg transition">
-                Done
-            </button>
+  <footer class="bg-slate-800 text-slate-400 py-6 text-center text-sm">
+    <p>&copy; 2025 PowerPay Systems</p>
+  </footer>
+
+  <!-- BUY TOKEN -->
+  <div id="buy-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">Buy Electricity Token</h3>
+        <button onclick="closeModal('buy-modal')"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <form onsubmit="handleBuyToken(event)">
+        <input type="hidden" id="buy-meter-id"/>
+        <div class="mb-3">
+          <label class="block text-sm">Meter Number</label>
+          <input id="buy-meter-number" disabled class="w-full border rounded px-3 py-2 bg-gray-100"/>
         </div>
+        <div class="mb-4">
+          <label class="block text-sm">Amount ($)</label>
+          <input id="buy-amount" type="number" min="5" step="0.01" required class="w-full border rounded px-3 py-2"/>
+          <p class="text-xs text-gray-500 mt-1">Min $5.00</p>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="px-4 py-2" onclick="closeModal('buy-modal')">Cancel</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+            <span id="buy-btn-text">Confirm</span>
+            <div id="buy-loader" class="loader ml-2 hidden"></div>
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        // --- GLOBAL STATE ---
-        const API_URL = 'http://localhost:5000/api';
-        let currentUser = null;
-        let userMeters = [];
-        let usageChart = null;
+  <!-- RECEIPT -->
+  <div id="receipt-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-sm p-6 text-center">
+      <h3 class="text-xl font-bold mb-2">Purchase Successful</h3>
+      <p class="text-sm text-gray-600 mb-4">Token generated</p>
+      <div class="bg-slate-100 p-4 rounded mb-4">
+        <div class="text-xs text-gray-400">Token</div>
+        <div id="receipt-token" class="font-mono font-bold text-lg">—</div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+        <div>
+          <div class="text-xs text-gray-400">Units Added</div>
+          <div id="receipt-units" class="font-bold">0.00</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-400">Cost</div>
+          <div id="receipt-cost" class="font-bold">$0.00</div>
+        </div>
+      </div>
+      <button class="bg-blue-600 text-white px-4 py-2 rounded" onclick="closeModal('receipt-modal'); loadDashboard();">Done</button>
+    </div>
+  </div>
 
-        // --- APP INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            checkSession();
+  <!-- ADD METER -->
+  <div id="add-meter-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-md p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">Add New Meter</h3>
+        <button onclick="closeModal('add-meter-modal')"><i class="fa-solid fa-times"></i></button>
+      </div>
+      <form id="add-meter-form" onsubmit="handleAddMeter(event)">
+        <div class="mb-3">
+          <label class="block text-sm">Meter Number</label>
+          <input id="new-meter-number" required class="w-full border rounded px-3 py-2"/>
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm">Meter Type</label>
+          <select id="new-meter-type" required class="w-full border rounded px-3 py-2">
+            <option value="">Select type</option>
+            <option>Single Phase</option>
+            <option>Three Phase</option>
+            <option>Split Phase</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm">Installation Address (optional)</label>
+          <input id="new-meter-address" class="w-full border rounded px-3 py-2"/>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" onclick="closeModal('add-meter-modal')" class="px-4 py-2">Cancel</button>
+          <button type="submit" id="add-meter-btn" class="bg-blue-600 text-white px-4 py-2 rounded">Add Meter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api';
+    let currentUser = null;
+    let userMeters = [];
+    let usageChart = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const stored = localStorage.getItem('powerpay_user');
+      if (stored) {
+        currentUser = JSON.parse(stored);
+        renderNav();
+        loadDashboard();
+      } else {
+        renderNav();
+        renderLogin();
+      }
+    });
+
+    function renderNav(){
+      const nav = document.getElementById('nav-links');
+      if (currentUser) {
+        nav.innerHTML = `<span class="text-blue-200 text-sm">Welcome, ${currentUser.full_name}</span>
+                         <a href="#" onclick="loadDashboard()">Dashboard</a>
+                         <button onclick="logout()" class="bg-red-500 text-white px-3 py-1 rounded">Logout</button>`;
+      } else {
+        nav.innerHTML = `<a href="#" onclick="renderLogin()">Login</a>
+                         <a href="#" onclick="renderRegister()" class="bg-yellow-500 px-3 py-1 rounded text-blue-900">Register</a>`;
+      }
+    }
+
+    function logout(){
+      currentUser = null;
+      localStorage.removeItem('powerpay_user');
+      renderNav();
+      renderLogin();
+    }
+
+    function renderLogin(){
+      const c = document.getElementById('app-container');
+      c.innerHTML = `
+        <div class="max-w-md mx-auto bg-white p-6 rounded shadow fade-in">
+          <h2 class="text-xl font-bold mb-4">Login</h2>
+          <form onsubmit="handleLogin(event)">
+            <div class="mb-3">
+              <label class="block text-sm">Email</label>
+              <input id="login-email" type="email" required class="w-full border px-3 py-2"/>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm">Password</label>
+              <input id="login-password" type="password" required class="w-full border px-3 py-2"/>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded">Sign In</button>
+          </form>
+          <p class="text-sm mt-3">Don't have an account? <a href="#" onclick="renderRegister()" class="text-blue-600">Register</a></p>
+        </div>`;
+    }
+
+    function renderRegister(){
+      const c = document.getElementById('app-container');
+      c.innerHTML = `
+        <div class="max-w-md mx-auto bg-white p-6 rounded shadow fade-in">
+          <h2 class="text-xl font-bold mb-4">Register</h2>
+          <form onsubmit="handleRegister(event)">
+            <div class="mb-2"><label class="block text-sm">Full Name</label><input id="reg-name" required class="w-full border px-3 py-2"/></div>
+            <div class="mb-2"><label class="block text-sm">Email</label><input id="reg-email" type="email" required class="w-full border px-3 py-2"/></div>
+            <div class="mb-2"><label class="block text-sm">Phone</label><input id="reg-phone" required class="w-full border px-3 py-2"/></div>
+            <div class="mb-4"><label class="block text-sm">Password</label><input id="reg-password" type="password" required class="w-full border px-3 py-2"/></div>
+            <button type="submit" class="w-full bg-yellow-500 text-blue-900 py-2 rounded">Register</button>
+          </form>
+        </div>`;
+    }
+
+    // --- Dashboard: loads from backend every time
+    async function loadDashboard(){
+      if (!currentUser) return renderLogin();
+      const container = document.getElementById('app-container');
+      container.innerHTML = `
+        <div class="flex flex-col space-y-6 fade-in">
+          <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold">My Meters</h1>
+            <button onclick="openAddMeterModal()" class="bg-blue-600 text-white px-4 py-2 rounded"><i class="fa-solid fa-plus mr-2"></i>Add Meter</button>
+          </div>
+
+          <div id="meters-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="animate-pulse bg-white h-48 rounded"></div>
+            <div class="animate-pulse bg-white h-48 rounded"></div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            <div class="lg:col-span-2 bg-white p-6 rounded shadow">
+              <h3 class="font-bold mb-3">Recent Transactions</h3>
+              <div class="overflow-auto"><table class="w-full text-left"><thead><tr><th>Date</th><th>Meter</th><th>Token</th><th class="text-right">Amount</th></tr></thead><tbody id="history-table-body"><tr><td colspan="4" class="text-center py-4 text-gray-400">Loading...</td></tr></tbody></table></div>
+            </div>
+            <div class="bg-white p-6 rounded shadow">
+              <h3 class="font-bold mb-3">Consumption Trend</h3>
+              <p id="chart-placeholder" class="text-sm text-gray-500 text-center py-10">Select a meter to view usage</p>
+              <canvas id="usageChart" class="hidden"></canvas>
+            </div>
+          </div>
+        </div>`;
+
+      try {
+        const res = await fetch(`${API_URL}/dashboard/${currentUser.customer_id}`);
+        if (!res.ok) throw new Error('Failed to load dashboard');
+        const data = await res.json();
+
+        userMeters = data.meters || [];
+        renderMeters(userMeters);
+        renderHistory(data.recent_transactions || []);
+        if (userMeters.length > 0) loadUsageChart(userMeters[0].meter_id);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to connect to server. Is backend running?");
+      }
+    }
+
+    function renderMeters(meters){
+      const grid = document.getElementById('meters-grid');
+      if (!meters || meters.length === 0){
+        grid.innerHTML = `<div class="col-span-3 text-center py-10 text-gray-500">No meters linked to this account.</div>`;
+        return;
+      }
+      grid.innerHTML = meters.map(m=>{
+        const balance = (typeof m.current_balance === 'number') ? m.current_balance : parseFloat(m.current_balance || 0);
+        return `<div class="bg-white p-6 rounded shadow">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <div class="text-xs text-gray-400 uppercase">Meter Number</div>
+                <div class="font-mono font-bold text-lg">${m.meter_number}</div>
+                <div class="text-xs text-gray-500 mt-1">${m.meter_type}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-gray-500">Balance</div>
+                <div class="text-2xl font-bold text-blue-900">${balance.toFixed(4)} <span class="text-xs">units</span></div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="openBuyModal(${m.meter_id}, '${m.meter_number}')" class="flex-1 bg-green-600 text-white py-2 rounded">Buy Token</button>
+              <button onclick="loadUsageChart(${m.meter_id})" class="flex-1 bg-gray-200 py-2 rounded">Usage</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderHistory(txns){
+      const tbody = document.getElementById('history-table-body');
+      if (!txns || txns.length === 0){
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">No transactions.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = txns.map(t => `<tr class="border-b">
+        <td class="py-2 text-sm">${new Date(t.purchase_date).toLocaleString()}</td>
+        <td class="py-2 text-sm">${t.meter_number}</td>
+        <td class="py-2 text-sm font-mono">${t.generated_token}</td>
+        <td class="py-2 text-right font-semibold">$${(t.amount_paid||0).toFixed(2)}</td>
+      </tr>`).join('');
+    }
+
+    // Chart loader (consumption)
+    async function loadUsageChart(meterId) {
+    const res = await fetch(`${API_URL}/consumption/${meterId}`);
+    const data = await res.json();
+
+    const labels = data.map(d => d.date);
+    const units = data.map(d => d.total_units);
+
+    const ctx = document.getElementById('usageChart').getContext('2d');
+
+    // Destroy previous chart if it exists
+    if(window.usageChartInstance) window.usageChartInstance.destroy();
+
+    window.usageChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Units Used',
+                data: units,
+                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Date' } },
+                y: { title: { display: true, text: 'Units Used' }, beginAtZero: true }
+            }
+        }
+    });
+
+    document.getElementById('usageChart').classList.remove('hidden');
+    document.getElementById('chart-placeholder').classList.add('hidden');
+}
+
+
+    // Modal helpers
+    function openBuyModal(meterId, meterNumber){
+      document.getElementById('buy-meter-id').value = meterId;
+      document.getElementById('buy-meter-number').value = meterNumber;
+      document.getElementById('buy-modal').classList.remove('hidden'); document.getElementById('buy-modal').classList.add('flex');
+    }
+    function openAddMeterModal(){
+      document.getElementById('new-meter-number').value = '';
+      document.getElementById('new-meter-type').value = '';
+      document.getElementById('new-meter-address').value = '';
+      document.getElementById('add-meter-modal').classList.remove('hidden'); document.getElementById('add-meter-modal').classList.add('flex');
+    }
+    function closeModal(id){
+      document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex');
+    }
+
+    // --- Forms: Login / Register / Add meter / Buy token ---
+    async function handleLogin(e){
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      try {
+        const res = await fetch(`${API_URL}/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password})});
+        const data = await res.json();
+        if (res.ok) {
+          currentUser = data.user;
+          localStorage.setItem('powerpay_user', JSON.stringify(currentUser));
+          renderNav(); loadDashboard();
+        } else alert(data.message || data.error || 'Login failed');
+      } catch (err) { console.error(err); alert('Server error'); }
+    }
+
+    async function handleRegister(e){
+      e.preventDefault();
+      const payload = { full_name: document.getElementById('reg-name').value.trim(),
+                        email: document.getElementById('reg-email').value.trim(),
+                        phone: document.getElementById('reg-phone').value.trim(),
+                        password: document.getElementById('reg-password').value.trim() };
+      try {
+        const res = await fetch(`${API_URL}/register`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) { alert('Registered — please login'); renderLogin(); }
+        else alert(data.error || data.message || 'Registration failed');
+      } catch (err) { console.error(err); alert('Server error'); }
+    }
+
+    async function handleAddMeter(e){
+      e.preventDefault();
+      const meterNumber = document.getElementById('new-meter-number').value.trim();
+      const meterType = document.getElementById('new-meter-type').value.trim();
+      const installation_address = document.getElementById('new-meter-address').value.trim() || null;
+      if (!meterNumber || !meterType) return alert('Enter meter number and type');
+
+      try {
+        const res = await fetch(`${API_URL}/add-meter`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ customer_id: currentUser.customer_id, meter_number: meterNumber, meter_type: meterType, installation_address })
         });
-
-        function checkSession() {
-            const storedUser = localStorage.getItem('powerpay_user');
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
-                renderNav();
-                loadDashboard();
-            } else {
-                renderNav();
-                renderLogin();
-            }
+        const data = await res.json();
+        if (res.ok) {
+          closeModal('add-meter-modal');
+          loadDashboard();
+          alert('Meter added successfully');
+        } else {
+          alert(data.error || data.message || 'Failed to add meter');
         }
+      } catch (err) {
+        console.error(err);
+        alert('Server error adding meter. Is backend running?');
+      }
+    }
 
-        // --- NAVIGATION RENDERER ---
-        function renderNav() {
-            const nav = document.getElementById('nav-links');
-            if (currentUser) {
-                nav.innerHTML = `
-                    <span class="text-blue-200 text-sm">Welcome, ${currentUser.full_name}</span>
-                    <a href="#" onclick="loadDashboard()" class="hover:text-yellow-400 transition">Dashboard</a>
-                    <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">Logout</button>
-                `;
-            } else {
-                nav.innerHTML = `
-                    <a href="#" onclick="renderLogin()" class="hover:text-yellow-400 transition">Login</a>
-                    <a href="#" onclick="renderRegister()" class="bg-yellow-500 hover:bg-yellow-600 text-blue-900 font-medium px-4 py-1 rounded transition">Register</a>
-                `;
-            }
+    async function handleBuyToken(e){
+      e.preventDefault();
+      const meter_id = parseInt(document.getElementById('buy-meter-id').value);
+      const amount = parseFloat(document.getElementById('buy-amount').value);
+      if (!meter_id || !amount || amount < 5) return alert('Enter a valid amount (min $5).');
+
+      // UI
+      document.getElementById('buy-btn-text').classList.add('hidden');
+      document.getElementById('buy-loader').classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${API_URL}/buy-token`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ meter_id, tariff_id: 1, amount })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+          closeModal('buy-modal');
+          // stored proc returns fields like Token, UnitsAdded, NetAmountUsed
+          const d = data.data || {};
+          const token = d.Token || d.generated_token || '—';
+          const units = parseFloat(d.UnitsAdded || d.units_purchased || 0);
+          const net = parseFloat(d.NetAmountUsed || d.NetAmountUsed || amount);
+          // show receipt
+          document.getElementById('receipt-token').innerText = token;
+          document.getElementById('receipt-units').innerText = units.toFixed(4);
+          document.getElementById('receipt-cost').innerText = `$${(amount).toFixed(2)}`;
+          document.getElementById('receipt-modal').classList.remove('hidden'); document.getElementById('receipt-modal').classList.add('flex');
+          // refresh dashboard to show updated balance (triggered by receipt Done)
+        } else {
+          alert(data.message || data.error || 'Purchase failed');
         }
-
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('powerpay_user');
-            renderNav();
-            renderLogin();
-        }
-
-        // --- VIEWS ---
-
-        function renderLogin() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="max-w-md mx-auto mt-10 bg-white p-8 rounded-xl shadow-lg fade-in">
-                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Login to Account</h2>
-                    <form onsubmit="handleLogin(event)">
-                        <div class="mb-4">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Email Address</label>
-                            <input type="email" id="login-email" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="user@example.com">
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Password</label>
-                            <input type="password" id="login-password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required placeholder="••••••••">
-                        </div>
-                        <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-800 transition font-medium">Sign In</button>
-                    </form>
-                    <p class="mt-4 text-center text-sm text-gray-500">
-                        Don't have an account? <a href="#" onclick="renderRegister()" class="text-blue-600 hover:underline">Register</a>
-                    </p>
-                </div>
-            `;
-        }
-
-        function renderRegister() {
-            const container = document.getElementById('app-container');
-            container.innerHTML = `
-                <div class="max-w-md mx-auto mt-10 bg-white p-8 rounded-xl shadow-lg fade-in">
-                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Create Account</h2>
-                    <form onsubmit="handleRegister(event)">
-                        <div class="mb-4">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Full Name</label>
-                            <input type="text" id="reg-name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Email Address</label>
-                            <input type="email" id="reg-email" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Phone Number</label>
-                            <input type="tel" id="reg-phone" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-600 mb-2 text-sm font-medium">Password</label>
-                            <input type="password" id="reg-password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        </div>
-                        <button type="submit" class="w-full bg-yellow-500 text-blue-900 font-bold py-2 rounded-lg hover:bg-yellow-400 transition">Register Now</button>
-                    </form>
-                    <p class="mt-4 text-center text-sm text-gray-500">
-                        Already have an account? <a href="#" onclick="renderLogin()" class="text-blue-600 hover:underline">Login</a>
-                    </p>
-                </div>
-            `;
-        }
-
-        async function loadDashboard() {
-            if (!currentUser) return renderLogin();
-            
-            const container = document.getElementById('app-container');
-            // Initial Skeleton
-            container.innerHTML = `
-                <div class="flex flex-col space-y-6 fade-in">
-                    <!-- Header -->
-                    <div class="flex justify-between items-center">
-                        <h1 class="text-2xl font-bold text-gray-800">My Meters</h1>
-                        <button onclick="alert('Demo: Feature to add meter')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"><i class="fa-solid fa-plus mr-2"></i> Add Meter</button>
-                    </div>
-
-                    <!-- Meters Grid -->
-                    <div id="meters-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="animate-pulse bg-white h-48 rounded-xl"></div>
-                        <div class="animate-pulse bg-white h-48 rounded-xl"></div>
-                    </div>
-
-                    <!-- Lower Section: History & Charts -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                        <!-- History -->
-                        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Recent Transactions</h3>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="text-sm text-gray-500 border-b">
-                                            <th class="py-2">Date</th>
-                                            <th class="py-2">Meter</th>
-                                            <th class="py-2">Token</th>
-                                            <th class="py-2 text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="history-table-body">
-                                        <tr><td colspan="4" class="text-center py-4 text-gray-400">Loading history...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Usage Chart Container -->
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Consumption Trend</h3>
-                            <p id="chart-placeholder" class="text-sm text-gray-500 text-center py-10">Select a meter to view usage</p>
-                            <canvas id="usageChart" class="hidden"></canvas>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            try {
-                const res = await fetch(`${API_URL}/dashboard/${currentUser.customer_id}`);
-                const data = await res.json();
-                
-                userMeters = data.meters;
-                renderMeters(data.meters);
-                renderHistory(data.recent_transactions);
-                
-                // Auto load chart for first meter if exists
-                if(data.meters.length > 0) loadUsageChart(data.meters[0].meter_id);
-
-            } catch (err) {
-                console.error(err);
-                alert("Failed to connect to server. Ensure Flask backend is running.");
-            }
-        }
-
-        // --- RENDER HELPERS ---
-
-        function renderMeters(meters) {
-            const grid = document.getElementById('meters-grid');
-            if (meters.length === 0) {
-                grid.innerHTML = `<div class="col-span-3 text-center py-10 text-gray-500">No meters linked to this account.</div>`;
-                return;
-            }
-
-            grid.innerHTML = meters.map(meter => `
-                <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Meter Number</p>
-                            <p class="text-xl font-mono text-gray-800 font-bold">${meter.meter_number}</p>
-                        </div>
-                        <i class="fa-solid fa-gauge-high text-blue-200 text-3xl"></i>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <p class="text-sm text-gray-500">Current Balance</p>
-                        <p class="text-3xl font-bold text-blue-900">${parseFloat(meter.current_balance).toFixed(2)} <span class="text-sm text-gray-400 font-normal">units</span></p>
-                    </div>
-
-                    <div class="flex space-x-2">
-                        <button onclick="openBuyModal(${meter.meter_id}, '${meter.meter_number}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-cart-shopping mr-1"></i> Buy Token
-                        </button>
-                        <button onclick="loadUsageChart(${meter.meter_id})" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg text-sm font-medium transition">
-                            <i class="fa-solid fa-chart-bar mr-1"></i> Usage
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderHistory(txns) {
-            const tbody = document.getElementById('history-table-body');
-            if (txns.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">No transactions found.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = txns.map(tx => `
-                <tr class="border-b last:border-0 hover:bg-gray-50">
-                    <td class="py-3 text-sm text-gray-600">${new Date(tx.purchase_date).toLocaleDateString()}</td>
-                    <td class="py-3 text-sm font-mono text-gray-600">${tx.meter_number}</td>
-                    <td class="py-3 text-sm"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-mono">${tx.generated_token}</span></td>
-                    <td class="py-3 text-sm text-right font-bold text-gray-700">$${parseFloat(tx.amount_paid).toFixed(2)}</td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadUsageChart(meterId) {
-            const chartCanvas = document.getElementById('usageChart');
-            const placeholder = document.getElementById('chart-placeholder');
-            
-            // UI Toggle
-            placeholder.classList.add('hidden');
-            chartCanvas.classList.remove('hidden');
-
-            try {
-                const res = await fetch(`${API_URL}/consumption/${meterId}`);
-                const data = await res.json();
-                
-                const labels = data.map(d => d.date);
-                const values = data.map(d => d.total_units);
-
-                if (usageChart) usageChart.destroy();
-
-                usageChart = new Chart(chartCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Daily Usage (Units)',
-                            data: values,
-                            backgroundColor: '#3b82f6',
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-
-            } catch (err) {
-                console.error("Chart load error", err);
-            }
-        }
-
-        // --- ACTIONS: AUTH ---
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            try {
-                const res = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok) {
-                    currentUser = data.user;
-                    localStorage.setItem('powerpay_user', JSON.stringify(currentUser));
-                    renderNav();
-                    loadDashboard();
-                } else {
-                    alert(data.message || 'Login failed');
-                }
-            } catch (err) {
-                alert('Connection error. Is Backend running?');
-            }
-        }
-
-        async function handleRegister(e) {
-            e.preventDefault();
-            const payload = {
-                full_name: document.getElementById('reg-name').value,
-                email: document.getElementById('reg-email').value,
-                phone: document.getElementById('reg-phone').value,
-                password: document.getElementById('reg-password').value
-            };
-
-            try {
-                const res = await fetch(`${API_URL}/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (res.ok) {
-                    alert('Registration Successful! Please Login.');
-                    renderLogin();
-                } else {
-                    const d = await res.json();
-                    alert('Error: ' + d.error);
-                }
-            } catch (err) {
-                alert('Connection error');
-            }
-        }
-
-        // --- ACTIONS: BUY TOKEN ---
-
-        function openBuyModal(meterId, meterNum) {
-            document.getElementById('buy-meter-id').value = meterId;
-            document.getElementById('buy-meter-number').value = meterNum;
-            document.getElementById('buy-amount').value = '';
-            document.getElementById('buy-modal').classList.remove('hidden');
-            document.getElementById('buy-modal').classList.add('flex');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-            document.getElementById(id).classList.remove('flex');
-        }
-
-        async function handleBuyToken(e) {
-            e.preventDefault();
-            const btnText = document.getElementById('buy-btn-text');
-            const loader = document.getElementById('buy-loader');
-            
-            // Loading State
-            btnText.textContent = "Processing...";
-            loader.classList.remove('hidden');
-
-            const payload = {
-                meter_id: parseInt(document.getElementById('buy-meter-id').value),
-                tariff_id: 1, // Default residential
-                amount: parseFloat(document.getElementById('buy-amount').value)
-            };
-
-            try {
-                const res = await fetch(`${API_URL}/buy-token`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const json = await res.json();
-
-                if (json.status === 'success') {
-                    closeModal('buy-modal');
-                    
-                    // Populate Receipt
-                    document.getElementById('receipt-token').textContent = json.data.Token;
-                    document.getElementById('receipt-units').textContent = parseFloat(json.data.UnitsAdded).toFixed(2);
-                    document.getElementById('receipt-cost').textContent = '$' + parseFloat(payload.amount).toFixed(2);
-                    
-                    // Show Receipt
-                    document.getElementById('receipt-modal').classList.remove('hidden');
-                    document.getElementById('receipt-modal').classList.add('flex');
-                } else {
-                    alert('Transaction Failed: ' + json.message);
-                }
-
-            } catch (err) {
-                console.error(err);
-                alert('System Error during purchase.');
-            } finally {
-                // Reset State
-                btnText.textContent = "Confirm Payment";
-                loader.classList.add('hidden');
-            }
-        }
-
-    </script>
+      } catch (err) {
+        console.error(err);
+        alert('Server error during purchase');
+      } finally {
+        document.getElementById('buy-btn-text').classList.remove('hidden');
+        document.getElementById('buy-loader').classList.add('hidden');
+        loadDashboard();
+      }
+    }
+  </script>
 </body>
 </html>
